@@ -1,5 +1,6 @@
 const dialogflow = require('@google-cloud/dialogflow');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 const sessionClient = new dialogflow.SessionsClient({
     keyFilename: path.join(__dirname, '../dialogflow-credentials.json')
@@ -7,9 +8,10 @@ const sessionClient = new dialogflow.SessionsClient({
 
 async function sendToDialogflow(message) {
     // Construct request
+    const sessionId = uuidv4(); 
     const sessionPath = sessionClient.projectAgentSessionPath(
-        'project-id',
-        'unique-session-id'
+        'ecomm-chatbot-io',
+        sessionId
     );
 
     const request = {
@@ -17,6 +19,7 @@ async function sendToDialogflow(message) {
         queryInput: {
             text: {
                 text: message,
+                languageCode: 'en-US'
             },
         },
     };

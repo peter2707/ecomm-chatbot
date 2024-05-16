@@ -17,31 +17,45 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // API Routes
-app.post('/api/sendMessage', async (req, res) => {
+app.post('/api/dialogflow', async (req, res) => {
     const userMessage = req.body.message;
 
     try {
         const dialogflowResponse = await dialogflow.sendToDialogflow(userMessage);
         const intent = dialogflowResponse.intent;
         const entities = dialogflowResponse.entities; 
+        // Check if the request has an intent
+        if (intent) {
+            let fulfillmentResponse; // Dialogflow's response
 
-        let chatbotResponse;
-        switch (intent) {
-            case 'TrackOrder':
-                chatbotResponse = await logistics.fetchOrderStatus(entities.trackingNumber);
-                break;
-            case 'RequestRefund':
-                chatbotResponse = await refunds.handleRequestRefund(entities); 
-                break;
-            
-            default: 
-                chatbotResponse = 'I am not sure I understand. Can you rephrase?'; 
+            switch (intent) {
+                case 'OrderStatus':
+                    const orderStatus = await logistics.fetchOrderStatus(entities.trackingNumber);
+                    fulfillmentResponse = {
+                        fulfillmentText: orderStatus 
+                    };
+                    break;
+                case 'RequestRefund':
+                    const refundResponse = await refunds.handleRequestRefund(entities); 
+                    fulfillmentResponse = {
+                        fulfillmentText: refundResponse
+                    };
+                    break;
+                default: 
+                    fulfillmentResponse = {
+                        fulfillmentText: 'Sorry, I didn\'t understand. Please try rephrasing.'
+                    };
+            }
+
+            res.json(fulfillmentResponse); // Send response back to Dialogflow
+
+        } else {
+            console.log('No intent detected in request.');
+            res.status(400).json({ message: 'No intent detected.' });
         }
 
-        res.json({ message: chatbotResponse });
-
     } catch (error) {
-        console.error("Error processing message:", error);
+        console.error("Error processing Dialogflow request:", error);
         res.status(500).json({ message: 'An error occurred.' });
     }
 });
