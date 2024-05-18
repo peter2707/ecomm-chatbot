@@ -6,26 +6,21 @@ const OrderHandler = ({ steps, triggerNextStep }) => {
     const [orderDetails, setOrderDetails] = useState(null);
 
     useEffect(() => {
-        // Clear previous order details
-        setOrderDetails(null);
+        setOrderDetails(null);          // Clear previous order details
 
         const fetchOrderStatus = async () => {
             try {
-                console.log('Fetching order status for:', orderNumber);
                 const response = await axios.post('https://chatbot-backend-vert.vercel.app/api/dialogflow', {
-                    message: `Track Order: ${orderNumber}`,
+                    message: `Track Order ${orderNumber}`,
                     sessionId: localStorage.getItem('sessionId') || null
                 });
                 localStorage.setItem('sessionId', response.data.sessionId);
-                console.log('Response data:', response.data);
 
                 // Extract and parse the embedded JSON from the fulfillmentText
                 const orderDataString = response.data.fulfillmentText.match(/\{.*\}/)[0];
                 const orderData = JSON.parse(orderDataString);
-                console.log('Parsed order data:', orderData);
-
+                
                 setOrderDetails(orderData);
-
                 const orderStatusMessage = `
                     Order Number: ${orderData.orderId}
                     Customer Name: ${orderData.customer.name}

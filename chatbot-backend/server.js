@@ -45,7 +45,7 @@ app.post('/api/dialogflow', async (req, res) => {
                 };
                 res.json(fulfillmentResponse);
             }
-        } else if (intent === 'RefundRequest') {
+        } else if (intent === 'ProvideRefundOrderNumber') {
             // User provided an order number for refund
             const orderNumber = entities.orderNumber.stringValue;
             if (validateOrderNumber(orderNumber)) {

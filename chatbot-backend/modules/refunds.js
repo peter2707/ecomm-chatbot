@@ -2,15 +2,12 @@ const database = require('./database');
 
 async function checkRefundEligibility(orderId) {
     try {
-        await database.connect();
-        const order = await database
-            .db("ecomm-chatbot")
-            .collection("Order")
-            .findOne({ orderId: orderId });
-
-        if (!order) {
-            return null;
+        const orderData = await database.getOrderStatus(orderId);
+        if (!orderData) {
+            return null; // Order not found
         }
+
+        const order = JSON.parse(orderData); // Parse the order data 
 
         const today = new Date();
         const orderDate = new Date(order.orderDate);
@@ -18,11 +15,7 @@ async function checkRefundEligibility(orderId) {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays <= 7) {
-            order.refundRequested = true;
-            await database.db("ecomm-chatbot").collection("Order").updateOne(
-                { orderId: orderId },
-                { $set: { refundRequested: true } }
-            );
+            database.updateRefundRequested(orderId);
             return "processed";
         } else {
             return "not eligible";

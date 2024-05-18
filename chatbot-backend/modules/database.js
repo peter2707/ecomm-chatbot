@@ -27,7 +27,23 @@ async function getOrderStatus(orderId) {
     }
 }
 
+// Function to update the refundRequested status in the database
+async function updateRefundRequested(orderId) {
+    try {
+        await client
+            .db("ecomm-chatbot")
+            .collection("Order").updateOne(
+                { orderId: orderId },
+                { $set: { refundRequested: true } }
+            );
+    } catch (error) {
+        console.error("Error updating refund requested status:", error);
+        throw error;
+    }
+}
+
 module.exports = {
     connect,
     getOrderStatus,
+    updateRefundRequested
 };
