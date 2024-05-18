@@ -1,4 +1,4 @@
-const database = require("./database"); // Import your database module
+const database = require("./database");
 
 async function fetchOrderStatus(trackingNumber) {
     try {

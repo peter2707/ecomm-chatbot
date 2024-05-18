@@ -1,10 +1,7 @@
 const MongoClient = require("mongodb").MongoClient;
 
 const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
+const client = new MongoClient(uri);
 
 async function connect() {
     try {
@@ -17,13 +14,13 @@ async function connect() {
 }
 
 // Functions for database interactions
-async function getOrderDetailsByTrackingNumber(trackingNumber) {
+async function getOrderStatus(orderId) {
     try {
         const order = await client
             .db("ecomm-chatbot")
             .collection("Order")
-            .findOne({ trackingNumber: trackingNumber });
-        return order;
+            .findOne({ orderId: orderId });
+        return JSON.stringify(order);
     } catch (error) {
         console.error("Error fetching order details:", error);
         throw error;
@@ -32,5 +29,5 @@ async function getOrderDetailsByTrackingNumber(trackingNumber) {
 
 module.exports = {
     connect,
-    getOrderDetailsByTrackingNumber,
+    getOrderStatus,
 };

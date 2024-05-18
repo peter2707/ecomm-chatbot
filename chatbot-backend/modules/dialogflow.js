@@ -1,14 +1,11 @@
 const dialogflow = require('@google-cloud/dialogflow');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 
 const sessionClient = new dialogflow.SessionsClient({
     keyFilename: path.join(__dirname, '../dialogflow-credentials.json')
 });
 
-async function sendToDialogflow(message) {
-    // Construct request
-    const sessionId = uuidv4(); 
+async function sendToDialogflow(message, sessionId) {
     const sessionPath = sessionClient.projectAgentSessionPath(
         'ecomm-chatbot-io',
         sessionId
@@ -24,14 +21,13 @@ async function sendToDialogflow(message) {
         },
     };
 
-    // Send request and log result
     const responses = await sessionClient.detectIntent(request);
-    console.log('Detected intent:', responses[0].queryResult.intent.displayName);
+    const result = responses[0].queryResult;
 
-    // Extract intent and entities 
     return {
-        intent: responses[0].queryResult.intent.displayName,
-        entities: responses[0].queryResult.parameters.fields 
+        intent: result.intent.displayName,
+        entities: result.parameters.fields,
+        fulfillmentText: result.fulfillmentText
     };
 }
 
