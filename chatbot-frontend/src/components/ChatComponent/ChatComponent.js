@@ -1,166 +1,125 @@
-import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
+import React from "react";
 import ChatBot from "react-simple-chatbot";
+import { ThemeProvider } from 'styled-components';
+import OrderHandler from "./OrderHandler";
+import RefundHandler from "./RefundHandler";
+import IssueHandler from "./IssueHandler";
 
-const Review = (props) => {
-    const [userDetails, setUserDetails] = useState({
-        name: "",
-        gender: "",
-        age: ""
-    });
-
-    useEffect(() => {
-        const { steps } = props;
-        const { name, gender, age } = steps;
-        setUserDetails({ name, gender, age });
-    }, [props]);
-
-    const { name, gender, age } = userDetails;
-
-    return (
-        <div style={{ width: "100%" }}>
-            <h3>Summary</h3>
-            <table>
-                <tbody>
-                    <tr>
-                        <td>Name</td>
-                        <td>{name.value}</td>
-                    </tr>
-                    <tr>
-                        <td>Gender</td>
-                        <td>{gender.value}</td>
-                    </tr>
-                    <tr>
-                        <td>Age</td>
-                        <td>{age.value}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
-Review.propTypes = {
-    steps: PropTypes.object,
+// Define the theme for the chatbot
+const theme = {
+    background: '#f5f8fb',
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    headerBgColor: '#00B2B2',
+    headerFontColor: '#fff',
+    headerFontSize: '15px',
+    botBubbleColor: '#00B2B2',
+    botFontColor: '#fff',
+    userBubbleColor: '#fff',
+    userFontColor: '#4a4a4a',
 };
 
-Review.defaultProps = {
-    steps: undefined,
-};
+// Define the steps for the chatbot
+const steps = [
+    {
+        id: "1",
+        message: "Hi! How can I assist you today?",
+        trigger: "options",
+    },
+    {
+        id: "options",
+        options: [
+            { value: "trackOrder", label: "Track Order", trigger: "askOrderNumber" },
+            { value: "refundRequest", label: "Request a Refund", trigger: "askRefundOrderNumber" },
+            { value: "escalateIssue", label: "Escalate Issue", trigger: "askIssueDetails" },
+        ],
+    },
+    {
+        id: "askOrderNumber",
+        message: "Please provide your order number (e.g., ORD1234).",
+        trigger: "orderNumber",
+    },
+    {
+        id: "orderNumber",
+        user: true,
+        trigger: "handleOrderNumber",
+    },
+    {
+        id: "handleOrderNumber",
+        component: <OrderHandler />,
+        asMessage: true,
+        waitAction: true,
+    },
+    {
+        id: "displayOrderStatus",
+        message: ({ previousValue }) => previousValue,
+        trigger: "anythingElse",
+    },
+    {
+        id: "askRefundOrderNumber",
+        message: "Please provide your order number for the refund request (e.g., ORD1234).",
+        trigger: "refundOrderNumber",
+    },
+    {
+        id: "refundOrderNumber",
+        user: true,
+        trigger: "handleRefundOrderNumber",
+    },
+    {
+        id: "handleRefundOrderNumber",
+        component: <RefundHandler />,
+        asMessage: true,
+        waitAction: true,
+    },
+    {
+        id: "displayRefundStatus",
+        message: ({ previousValue }) => previousValue,
+        trigger: "anythingElse",
+    },
+    {
+        id: "askIssueDetails",
+        message: "Please describe the issue you are facing.",
+        trigger: "issueDetails",
+    },
+    {
+        id: "issueDetails",
+        user: true,
+        trigger: "handleIssueDetails",
+    },
+    {
+        id: "handleIssueDetails",
+        component: <IssueHandler />,
+        asMessage: true,
+        waitAction: true,
+    },
+    {
+        id: "displayIssueStatus",
+        message: ({ previousValue }) => previousValue,
+        trigger: "anythingElse",
+    },
+    {
+        id: "anythingElse",
+        message: "Is there anything else I can assist you with?",
+        trigger: "anythingElseOptions",
+    },
+    {
+        id: "anythingElseOptions",
+        options: [
+            { value: "yes", label: "Yes", trigger: "options" },
+            { value: "no", label: "No", trigger: "endMessage" },
+        ],
+    },
+    {
+        id: "endMessage",
+        message: "Thank you! Have a great day!",
+        end: true,
+    },
+];
 
 const ChatComponent = () => {
     return (
-        <ChatBot
-            steps={[
-                {
-                    id: "1",
-                    message: "What is your name?",
-                    trigger: "name",
-                },
-                {
-                    id: "name",
-                    user: true,
-                    trigger: "3",
-                },
-                {
-                    id: "3",
-                    message: "Hi {previousValue}! What is your gender?",
-                    trigger: "gender",
-                },
-                {
-                    id: "gender",
-                    options: [
-                        { value: "male", label: "Male", trigger: "5" },
-                        { value: "female", label: "Female", trigger: "5" },
-                    ],
-                },
-                {
-                    id: "5",
-                    message: "How old are you?",
-                    trigger: "age",
-                },
-                {
-                    id: "age",
-                    user: true,
-                    trigger: "7",
-                    validator: (value) => {
-                        if (isNaN(value)) {
-                            return "value must be a number";
-                        } else if (value < 0) {
-                            return "value must be positive";
-                        } else if (value > 120) {
-                            return `${value}? Come on!`;
-                        }
-
-                        return true;
-                    },
-                },
-                {
-                    id: "7",
-                    message: "Great! Check out your summary",
-                    trigger: "review",
-                },
-                {
-                    id: "review",
-                    component: <Review />,
-                    asMessage: true,
-                    trigger: "update",
-                },
-                {
-                    id: "update",
-                    message: "Would you like to update some field?",
-                    trigger: "update-question",
-                },
-                {
-                    id: "update-question",
-                    options: [
-                        { value: "yes", label: "Yes", trigger: "update-yes" },
-                        { value: "no", label: "No", trigger: "end-message" },
-                    ],
-                },
-                {
-                    id: "update-yes",
-                    message: "What field would you like to update?",
-                    trigger: "update-fields",
-                },
-                {
-                    id: "update-fields",
-                    options: [
-                        {
-                            value: "name",
-                            label: "Name",
-                            trigger: "update-name",
-                        },
-                        {
-                            value: "gender",
-                            label: "Gender",
-                            trigger: "update-gender",
-                        },
-                        { value: "age", label: "Age", trigger: "update-age" },
-                    ],
-                },
-                {
-                    id: "update-name",
-                    update: "name",
-                    trigger: "7",
-                },
-                {
-                    id: "update-gender",
-                    update: "gender",
-                    trigger: "7",
-                },
-                {
-                    id: "update-age",
-                    update: "age",
-                    trigger: "7",
-                },
-                {
-                    id: "end-message",
-                    message: "Thanks! Your data was submitted successfully!",
-                    end: true,
-                },
-            ]}
-        />
+        <ThemeProvider theme={theme}>
+            <ChatBot steps={steps} />
+        </ThemeProvider>
     );
 };
 
