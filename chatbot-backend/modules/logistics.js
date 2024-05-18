@@ -1,13 +1,26 @@
-const axios = require('axios');
+const database = require("./database");
 
 async function fetchOrderStatus(trackingNumber) {
     try {
-        // logic for fetch status from logistic API
+        const order = await database.getOrderDetailsByTrackingNumber(
+            trackingNumber
+        );
 
-        return 'Order Status: ...';
+        if (order) {
+            const status = order.shippingStatus;
+            const estimatedDelivery = order.logisticData.estimatedDelivery
+                ? new Date(
+                      order.logisticData.estimatedDelivery
+                  ).toLocaleDateString()
+                : "Unknown";
+
+            return `Your order with tracking number ${trackingNumber} is currently **${status}**. Estimated delivery date: **${estimatedDelivery}**.`;
+        } else {
+            return "Tracking number not found.";
+        }
     } catch (error) {
-        console.error("Error fetching tracking status:", error);
-        throw error;
+        console.error("Error fetching order status:", error);
+        return "An error occurred while tracking your order. Please try again later.";
     }
 }
 
