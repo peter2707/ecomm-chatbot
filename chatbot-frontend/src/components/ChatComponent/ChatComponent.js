@@ -19,13 +19,15 @@ const theme = {
     userFontColor: "#4a4a4a",
 };
 
+/**
+ * Component for rendering a chatbot.
+ * Fetches a welcome message from a backend server upon mounting.
+**/
 const ChatComponent = () => {
     const [welcomeMessage, setWelcomeMessage] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const [orderPrompt, setOrderPrompt] = useState("");
-    const [refundPrompt, setRefundPrompt] = useState("");
-    const [issuePrompt, setIssuePrompt] = useState("");
 
+    // Effect hook to fetch the welcome message from the backend
     useEffect(() => {
         const fetchWelcomeMessage = async () => {
             try {
@@ -45,57 +47,6 @@ const ChatComponent = () => {
         };
 
         fetchWelcomeMessage();
-    }, []);
-
-    useEffect(() => {
-        const fetchOrderPrompt = async () => {
-            try {
-                const response = await axios.post(
-                    "https://chatbot-backend-vert.vercel.app/api/dialogflow",
-                    {
-                        message: "TRACK_ORDER",
-                        sessionId: localStorage.getItem("sessionId") || null,
-                    }
-                );
-                setOrderPrompt(response.data.fulfillmentText);
-            } catch (error) {
-                console.error("Error fetching order prompt:", error);
-            }
-        };
-
-        const fetchRefundPrompt = async () => {
-            try {
-                const response = await axios.post(
-                    "https://chatbot-backend-vert.vercel.app/api/dialogflow",
-                    {
-                        message: "REQUEST_REFUND",
-                        sessionId: localStorage.getItem("sessionId") || null,
-                    }
-                );
-                setRefundPrompt(response.data.fulfillmentText);
-            } catch (error) {
-                console.error("Error fetching refund prompt:", error);
-            }
-        };
-
-        const fetchIssuePrompt = async () => {
-            try {
-                const response = await axios.post(
-                    "https://chatbot-backend-vert.vercel.app/api/dialogflow",
-                    {
-                        message: "ESCALATE_ISSUE",
-                        sessionId: localStorage.getItem("sessionId") || null,
-                    }
-                );
-                setIssuePrompt(response.data.fulfillmentText);
-            } catch (error) {
-                console.error("Error fetching issue prompt:", error);
-            }
-        };
-
-        fetchOrderPrompt();
-        fetchRefundPrompt();
-        fetchIssuePrompt();
     }, []);
 
     // Define the steps for the chatbot
@@ -120,16 +71,14 @@ const ChatComponent = () => {
                 },
                 {
                     value: "escalateIssue",
-                    label: "Escalate Issue",
+                    label: "Ask a Human",
                     trigger: "askIssueDetails",
                 },
             ],
         },
         {
             id: "askOrderNumber",
-            message:
-                orderPrompt ||
-                "Please provide your order number (e.g., ORD1234).",
+            message: "Sure, I can help tracking your order. Could you please provide your order number? (e.g., ORD1234).",
             trigger: "orderNumber",
         },
         {
@@ -150,9 +99,7 @@ const ChatComponent = () => {
         },
         {
             id: "askRefundOrderNumber",
-            message:
-                refundPrompt ||
-                "Please provide your order number for the refund request (e.g., ORD1234).",
+            message: "I'm sorry to hear you want a refund. Can you please provide your order number? (e.g., ORD1234).",
             trigger: "refundOrderNumber",
         },
         {
@@ -173,7 +120,7 @@ const ChatComponent = () => {
         },
         {
             id: "askIssueDetails",
-            message: issuePrompt || "Please describe the issue you are facing.",
+            message: "Please describe the issue you are facing.",
             trigger: "issueDetails",
         },
         {
@@ -211,9 +158,10 @@ const ChatComponent = () => {
         },
     ];
 
+    // Render the chatbot component with the defined steps and theme
     return (
         <ThemeProvider theme={theme}>
-            {isLoading ? <div>Loading...</div> : <ChatBot steps={steps} />}
+            {isLoading ? <div>Loading...</div> : <ChatBot steps={steps} style={{ width: 500 }} />}
         </ThemeProvider>
     );
 };

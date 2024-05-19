@@ -1,48 +1,82 @@
 import React, { useEffect, useState } from "react";
-import axios from 'axios';
+import axios from "axios";
+import { validateOrderNumber } from "../../components/Utils/Utils";
+import OrderStatusMessage from "./OrderStatusMessage";
 
 const OrderHandler = ({ steps, triggerNextStep }) => {
+    // Extract order number from previous steps and initialize state variables
     const orderNumber = steps.orderNumber.value;
     const [orderDetails, setOrderDetails] = useState(null);
+    const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
-        setOrderDetails(null);          // Clear previous order details
+        // Reset order details
+        setOrderDetails(null);
 
         const fetchOrderStatus = async () => {
             try {
-                const response = await axios.post('https://chatbot-backend-vert.vercel.app/api/dialogflow', {
-                    message: `Track Order ${orderNumber}`,
-                    sessionId: localStorage.getItem('sessionId') || null
-                });
-                localStorage.setItem('sessionId', response.data.sessionId);
+                // Validate order number
+                if (!validateOrderNumber(orderNumber)) {
+                    setErrorMessage("Please provide a valid order number (e.g., ORD1234).");
+                    return;
+                } else {
+                    // Send request to backend to track the order
+                    const response = await axios.post(
+                        "https://chatbot-backend-vert.vercel.app/api/dialogflow",
+                        {
+                            message: `TRACK_ORDER: ${orderNumber}`,
+                            sessionId: localStorage.getItem("sessionId") || null,
+                        }
+                    );
+                    // Update session ID in local storage
+                    localStorage.setItem("sessionId", response.data.sessionId);
 
-                // Extract and parse the embedded JSON from the fulfillmentText
-                const orderDataString = response.data.fulfillmentText.match(/\{.*\}/)[0];
-                const orderData = JSON.parse(orderDataString);
-                
-                setOrderDetails(orderData);
-                const orderStatusMessage = `
-                    Order Number: ${orderData.orderId}
-                    Customer Name: ${orderData.customer.name}
-                    Shipping Status: ${orderData.shippingStatus}
-                    Tracking Number: ${orderData.trackingNumber}
-                    Items: ${orderData.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}
-                `;
-                console.log('Order status message:', orderStatusMessage);
-                triggerNextStep({ value: orderStatusMessage, trigger: 'displayOrderStatus' });
+                    // Parse the order data from the response
+                    const orderData = JSON.parse(
+                        response.data.fulfillmentText.orderStatus
+                    );
+                    
+                    // If orderData is null, display an error message
+                    if (orderData === null) {
+                        setErrorMessage("Order not found. Please check the order number or try again.");
+                        return;
+                    }
+
+                    // Update order details state and trigger display of order status
+                    setOrderDetails(orderData);
+                    triggerNextStep({
+                        value: "----------END OF RESULT----------",
+                        trigger: "displayOrderStatus",
+                    });
+                }
             } catch (error) {
-                console.error('Error fetching order status:', error);
-                triggerNextStep({ value: "There was an error processing your request. Please try again later.", trigger: 'displayOrderStatus' });
+                // Handle errors by displaying an error message in the chatbot
+                triggerNextStep({
+                    value: "There was an error processing your request. Please try again later.",
+                    trigger: "displayOrderStatus",
+                });
             }
         };
 
+        // Invoke the fetchOrderStatus function
         fetchOrderStatus();
     }, [orderNumber, triggerNextStep]);
 
+    // Effect hook to trigger the display of error messages
+    useEffect(() => {
+        if (errorMessage) {
+            triggerNextStep({
+                value: errorMessage,
+                trigger: "displayOrderStatus",
+            });
+        }
+    }, [errorMessage, triggerNextStep]);
+
+    // Render the OrderStatusMessage component with the orderDetails state
     return (
-        <span>
-            {orderDetails ? 'Fetching order details...' : 'Checking your order status...'}
-        </span>
+        <div>
+            <OrderStatusMessage orderData={orderDetails} />
+        </div>
     );
 };
 
