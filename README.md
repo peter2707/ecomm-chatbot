@@ -30,7 +30,7 @@ This repository contains the code for a chatbot application using React for the 
 - Version control using GitHub
 
 ## Architecture
-
+![mermaid-flow](https://github.com/peter2707/ecomm-chatbot/assets/62277365/7d4376e9-6191-4af7-9786-c98afbb61bdc)
 ## Getting Started
 
 ### Prerequisites
